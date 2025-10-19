@@ -23,7 +23,6 @@ import static org.springframework.security.config.Customizer.withDefaults;
 @RequiredArgsConstructor
 public class SecurityConfig {
 
-    // Inject chuỗi bí mật từ application.properties
     @Value("${jwt.secret}")
     private String jwtSecret;
 
@@ -51,7 +50,6 @@ public class SecurityConfig {
         return new BCryptPasswordEncoder();
     }
 
-    // Thêm bean này vào
     @Bean
     public JwtDecoder jwtDecoder() {
         SecretKeySpec secretKey = new SecretKeySpec(this.jwtSecret.getBytes(), "HmacSHA256");

@@ -1,4 +1,4 @@
-package com.example.auth_service.service;
+package com.example.auth_service.service.Impl;
 
 import com.example.auth_service.dto.LoginRequest;
 import com.example.auth_service.dto.LoginResult;
@@ -9,7 +9,7 @@ import com.example.auth_service.entity.User;
 import com.example.auth_service.repository.RefreshTokenRepository;
 import com.example.auth_service.repository.UserRepository;
 import com.example.auth_service.security.JwtService;
-import com.example.auth_service.service.Impl.AuthService;
+import com.example.auth_service.service.AuthService;
 import com.example.auth_service.util.HashUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
