@@ -10,11 +10,12 @@ import com.example.auth_service.repository.RefreshTokenRepository;
 import com.example.auth_service.repository.UserRepository;
 import com.example.auth_service.security.JwtService;
 import com.example.auth_service.service.Impl.AuthService;
+import com.example.auth_service.util.HashUtil;
 import lombok.RequiredArgsConstructor;
-import org.apache.sshd.common.config.keys.loader.openssh.kdf.BCrypt;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
@@ -42,6 +43,7 @@ public class AuthServiceImpl implements AuthService {
     }
 
     @Override
+    @Transactional
     public LoginResult login(LoginRequest req) {
         User u = userRepo.findByUsername(req.username())
                 .orElseThrow(() -> new RuntimeException("Bad credentials"));
@@ -49,7 +51,7 @@ public class AuthServiceImpl implements AuthService {
 
         String access = jwtService.generateAccessToken(u);
         String refreshPlain = UUID.randomUUID().toString();
-        String hash = BCrypt.hashpw(refreshPlain, BCrypt.gensalt());
+        String hash = HashUtil.sha256(refreshPlain);
         RefreshToken rt = new RefreshToken();
         rt.setUser(u);
         rt.setTokenHash(hash);
@@ -59,20 +61,22 @@ public class AuthServiceImpl implements AuthService {
     }
 
     @Override
+    @Transactional
     public TokenPair refresh(String refreshPlain) {
-        RefreshToken match = rtRepo.findAll().stream()
-                .filter(rt -> !rt.isRevoked() && Instant.now().isBefore(rt.getExpiresAt())
-                        && BCrypt.checkpw(refreshPlain, rt.getTokenHash()))
-                .findFirst().orElseThrow(() -> new RuntimeException("Invalid refresh"));
+        String hash = HashUtil.sha256(refreshPlain);
+        RefreshToken match = rtRepo.findByTokenHash(hash)
+                .filter(rt -> !rt.isRevoked() && Instant.now().isBefore(rt.getExpiresAt()))
+                .orElseThrow(() -> new RuntimeException("Invalid refresh"));
+
         User u = match.getUser();
         match.setRevoked(true);
-        rtRepo.save(match);
 
         String access = jwtService.generateAccessToken(u);
         String newRtPlain = UUID.randomUUID().toString();
+        String newRtHash = HashUtil.sha256(newRtPlain);
         RefreshToken newRt = new RefreshToken();
         newRt.setUser(u);
-        newRt.setTokenHash(BCrypt.hashpw(newRtPlain, BCrypt.gensalt()));
+        newRt.setTokenHash(newRtHash);
         newRt.setExpiresAt(Instant.now().plus(refreshExpDays, ChronoUnit.DAYS));
         rtRepo.save(newRt);
 
@@ -82,9 +86,11 @@ public class AuthServiceImpl implements AuthService {
     }
 
     @Override
+    @Transactional
     public void logout(String refreshPlain) {
-        rtRepo.findAll().forEach(rt -> {
-            if (!rt.isRevoked() && BCrypt.checkpw(refreshPlain, rt.getTokenHash())) {
+        String hash = HashUtil.sha256(refreshPlain);
+        rtRepo.findByTokenHash(hash).ifPresent(rt -> {
+            if (!rt.isRevoked()) {
                 rt.setRevoked(true);
                 rtRepo.save(rt);
             }

@@ -2,7 +2,6 @@ package com.example.auth_service.controller;
 
 import com.example.auth_service.dto.*;
 import com.example.auth_service.entity.User;
-import com.example.auth_service.service.AuthServiceImpl;
 import com.example.auth_service.service.Impl.AuthService;
 import com.example.auth_service.util.CookieUtil;
 import jakarta.validation.Valid;
@@ -20,8 +19,8 @@ public class AuthController {
     @Value("${cookie.domain}") private String cookieDomain;
     @Value("${cookie.secure}") private boolean cookieSecure;
     @Value("${cookie.samesite}") private String cookieSameSite;
-    @Value("${jwt.access-exp-minutes}") private int accessExpMinutes;
-    @Value("${jwt.refresh-exp-days}") private int refreshExpDays;
+    @Value("${jwt.access-exp-minutes:15}") private int accessExpMinutes;
+    @Value("${jwt.refresh-exp-days:7}") private int refreshExpDays;
 
     @PostMapping("/signup")
     public ResponseEntity<ApiResponse<AuthResponse>> signup(@Valid @RequestBody SignupRequest req) {

@@ -14,6 +14,11 @@ public class CookieUtil {
                 .maxAge(Duration.ofSeconds(maxAgeSeconds));
         if (domain != null && !domain.isBlank()) b.domain(domain);
         if (sameSite != null && !sameSite.isBlank()) b.sameSite(sameSite);
+
+        if ("None".equalsIgnoreCase(sameSite) && secure) {
+            b.partitioned(true);
+        }
+
         return b.build();
     }
 }
