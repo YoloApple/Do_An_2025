@@ -1,4 +1,4 @@
-package com.example.auth_service.service;
+package com.example.auth_service.service.Impl;
 
 import com.example.auth_service.dto.LoginRequest;
 import com.example.auth_service.dto.LoginResult;
@@ -9,7 +9,7 @@ import com.example.auth_service.entity.User;
 import com.example.auth_service.repository.RefreshTokenRepository;
 import com.example.auth_service.repository.UserRepository;
 import com.example.auth_service.security.JwtService;
-import com.example.auth_service.service.Impl.AuthService;
+import com.example.auth_service.service.AuthService;
 import com.example.auth_service.util.HashUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
@@ -29,17 +29,21 @@ public class AuthServiceImpl implements AuthService {
     private final PasswordEncoder encoder;
     private final JwtService jwtService;
 
-    @Value("${jwt.refresh-exp-days}") private long refreshExpDays;
+    @Value("${jwt.refresh-exp-days:7}") private long refreshExpDays;
 
     @Override
-    public User signup(SignupRequest req) {
+    @Transactional
+    public LoginResult signup(SignupRequest req) {
         if (userRepo.existsByUsername(req.username())) throw new RuntimeException("Username taken");
         if (userRepo.existsByEmail(req.email())) throw new RuntimeException("Email taken");
         User u = new User();
         u.setUsername(req.username());
         u.setEmail(req.email());
         u.setPassword(encoder.encode(req.password()));
-        return userRepo.save(u);
+        User savedUser = userRepo.save(u);
+
+        // Sau khi lưu user, tạo token và trả về kết quả đăng nhập
+        return generateTokensAndLoginResult(savedUser);
     }
 
     @Override
@@ -49,15 +53,20 @@ public class AuthServiceImpl implements AuthService {
                 .orElseThrow(() -> new RuntimeException("Bad credentials"));
         if (!encoder.matches(req.password(), u.getPassword())) throw new RuntimeException("Bad credentials");
 
-        String access = jwtService.generateAccessToken(u);
+        return generateTokensAndLoginResult(u);
+    }
+
+    // Phương thức để tạo token, được sử dụng bởi cả login và signup
+    private LoginResult generateTokensAndLoginResult(User user) {
+        String access = jwtService.generateAccessToken(user);
         String refreshPlain = UUID.randomUUID().toString();
         String hash = HashUtil.sha256(refreshPlain);
         RefreshToken rt = new RefreshToken();
-        rt.setUser(u);
+        rt.setUser(user);
         rt.setTokenHash(hash);
         rt.setExpiresAt(Instant.now().plus(refreshExpDays, ChronoUnit.DAYS));
         rtRepo.save(rt);
-        return new LoginResult(u, new TokenPair(access, refreshPlain));
+        return new LoginResult(user, new TokenPair(access, refreshPlain));
     }
 
     @Override

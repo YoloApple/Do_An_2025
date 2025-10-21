@@ -24,4 +24,9 @@ public class User {
     private String email;
     private boolean enabled = true;
     private Instant createdAt = Instant.now();
+    @Column(length = 20,unique = true)
+    private String phone;
+    @Enumerated(EnumType.STRING)
+    @Column(length = 10)
+    private Gender gender;
 }
