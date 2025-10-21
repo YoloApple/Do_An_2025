@@ -37,7 +37,7 @@ public class MeServiceImpl implements MeService {
             }
             u.setPhone(req.phone().trim());
         } else {
-            u.setPhone(null); // cho phép xóa phone nếu muốn
+            u.setPhone(null);
         }
 
         u.setGender(req.gender() != null ? req.gender() : Gender.UNKNOWN);
