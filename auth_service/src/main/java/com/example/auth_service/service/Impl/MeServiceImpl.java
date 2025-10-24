@@ -41,6 +41,7 @@ public class MeServiceImpl implements MeService {
         }
 
         u.setGender(req.gender() != null ? req.gender() : Gender.UNKNOWN);
+        u.setDescription(req.description() != null ? req.description(): "");
         userRepo.save(u);
         return toDto(u);
     }
@@ -51,7 +52,8 @@ public class MeServiceImpl implements MeService {
                 u.getUsername(),
                 u.getEmail(),
                 u.getPhone(),
-                u.getGender()
+                u.getGender(),
+                u.getDescription()
         );
     }
 }

@@ -54,6 +54,17 @@ public class AuthController {
         return ResponseEntity.ok(ApiResponse.success(pair, "Token refreshed successfully"));
     }
 
+    @PostMapping("/forgot-password")
+    public ResponseEntity<ApiResponse<Void>> forgotPassword(@Valid @RequestBody ForgotPasswordRequest req) {
+        authService.forgotPassword(req.email());
+        return ResponseEntity.ok(ApiResponse.success("Password reset link has been sent to your email."));
+    }
+
+    @PostMapping("/reset-password")
+    public ResponseEntity<ApiResponse<Void>> resetPassword(@Valid @RequestBody ResetPasswordRequest req) {
+        authService.resetPassword(req.token(), req.newPassword());
+        return ResponseEntity.ok(ApiResponse.success("Password has been reset successfully."));
+    }
 
     @PostMapping("/logout")
     public ResponseEntity<ApiResponse<Void>> logout(@Valid @RequestBody TokenRequest req) {

@@ -29,4 +29,9 @@ public class User {
     @Enumerated(EnumType.STRING)
     @Column(length = 10)
     private Gender gender;
+    @Column(length = 500)
+    private String description;
+
+    private String passwordResetToken;
+    private Instant passwordResetTokenExpiresAt;
 }
