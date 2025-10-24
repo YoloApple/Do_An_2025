@@ -11,6 +11,7 @@ import com.example.auth_service.repository.UserRepository;
 import com.example.auth_service.security.JwtService;
 import com.example.auth_service.service.AuthService;
 import com.example.auth_service.util.HashUtil;
+import com.example.auth_service.service.EmailService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -28,6 +29,7 @@ public class AuthServiceImpl implements AuthService {
     private final RefreshTokenRepository rtRepo;
     private final PasswordEncoder encoder;
     private final JwtService jwtService;
+    private final EmailService emailService;
 
     @Value("${jwt.refresh-exp-days:7}") private long refreshExpDays;
 
@@ -104,6 +106,40 @@ public class AuthServiceImpl implements AuthService {
                 rtRepo.save(rt);
             }
         });
+    }
+
+    @Override
+    @Transactional
+    public void forgotPassword(String email) {
+        User user = userRepo.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("User with this email not found"));
+
+        String token = UUID.randomUUID().toString();
+        user.setPasswordResetToken(token);
+        user.setPasswordResetTokenExpiresAt(Instant.now().plus(1, ChronoUnit.HOURS));
+        userRepo.save(user);
+
+        emailService.sendPasswordResetEmail(user.getEmail(), token, user.getUsername());
+    }
+
+    @Override
+    @Transactional
+    public void resetPassword(String token, String newPassword) {
+        User user = userRepo.findByPasswordResetToken(token)
+                .orElseThrow(() -> new RuntimeException("Invalid password reset token"));
+
+        if (user.getPasswordResetTokenExpiresAt().isBefore(Instant.now())) {
+            throw new RuntimeException("Password reset token has expired");
+        }
+
+        user.setPassword(encoder.encode(newPassword));
+        user.setPasswordResetToken(null);
+        user.setPasswordResetTokenExpiresAt(null);
+
+        // Optional: Invalidate all existing refresh tokens for security
+        rtRepo.revokeAllByUser(user.getId());
+
+        userRepo.save(user);
     }
 }
 

@@ -10,4 +10,6 @@ public interface AuthService {
     LoginResult login(LoginRequest req);
     TokenPair refresh (String refreshPlain);
     void logout(String refreshPlain);
+    void forgotPassword(String email);
+    void resetPassword(String token, String newPassword);
 }
