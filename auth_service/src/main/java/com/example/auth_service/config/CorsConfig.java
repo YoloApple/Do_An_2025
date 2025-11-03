@@ -20,7 +20,8 @@ public class CorsConfig {
                 "http://localhost:3000",
                 "http://localhost:8080",
                 "https://*.ngrok-free.app",
-                "https://localhost:3000"
+                "https://localhost:3000",
+                "https://ai-agent-virtual-classroom-3os3ik96x-dk1uteas-projects.vercel.app"
         ));
 
         configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));

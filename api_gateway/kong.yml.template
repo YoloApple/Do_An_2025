@@ -1,0 +1,136 @@
+_format_version: "3.0"
+
+#================================
+# HƯỚNG DẪN:
+# 1. Copy file này thành kong.yml: cp kong.yml.template kong.yml
+# 2. Thay thế các giá trị PLACEHOLDER bằng giá trị thực tế từ Auth Service
+# 3. File kong.yml sẽ KHÔNG được commit lên Git
+#================================
+
+services:
+  #================================
+  # Auth Service
+  #================================
+  - name: auth-service
+    url: http://host.docker.internal:8080
+    tags: [ "auth" ]
+    routes:
+      - name: auth-public-routes
+        paths:
+          - /api/v1/auth/login
+          - /api/v1/auth/signup
+          - /api/v1/auth/refresh
+          - /api/v1/auth/forgot-password
+          - /api/v1/auth/reset-password
+          - /api/v1/auth/logout
+        strip_path: false
+        tags: [ "auth", "public" ]
+      
+      - name: me-route
+        paths:
+          - /api/v1/me
+        strip_path: false
+        methods:
+          - GET
+          - PATCH
+          - PUT
+        tags: [ "auth", "protected" ]
+        plugins:
+          - name: jwt
+            config:
+              uri_param_names: []
+              cookie_names: []
+              header_names:
+                - authorization
+              claims_to_verify:
+                - exp
+              key_claim_name: iss
+              secret_is_base64: false
+              anonymous: null
+              run_on_preflight: false
+
+  #================================
+  # Course Service (Protected)
+  # TODO: Cập nhật URL khi Course Service thay đổi ngrok
+  #================================
+  - name: course-service
+    url: https://your-course-service-ngrok-url.ngrok-free.dev  # <-- THAY ĐỔI URL NÀY
+    tags: [ "courses" ]
+    routes:
+      - name: course-routes
+        paths:
+          - /api/courses
+        strip_path: false
+        methods:
+          - GET
+          - POST
+          - PUT
+          - DELETE
+          - PATCH
+          - OPTIONS
+        tags: [ "courses", "protected" ]
+        plugins:
+          - name: request-transformer
+            config:
+              add:
+                headers:
+                  - "ngrok-skip-browser-warning: true"
+          
+          - name: jwt
+            config:
+              uri_param_names: []
+              cookie_names: []
+              header_names:
+                - authorization
+              claims_to_verify:
+                - exp
+              key_claim_name: iss
+              secret_is_base64: false
+              anonymous: null
+              run_on_preflight: false
+
+#================================
+# JWT Consumers
+# QUAN TRỌNG: Thay thế PLACEHOLDER bằng giá trị thực tế
+#================================
+consumers:
+  - username: auth-service-consumer
+    tags: [ "system" ]
+    jwt_secrets:
+      # TODO: Copy JWT_ISSUER từ auth_service/.env
+      - key: "PLACEHOLDER_JWT_ISSUER"  # <-- THAY ĐỔI GIÁ TRỊ NÀY
+        # TODO: Copy JWT_SECRET từ auth_service/.env
+        secret: "PLACEHOLDER_JWT_SECRET"  # <-- THAY ĐỔI GIÁ TRỊ NÀY
+        algorithm: HS256
+
+#================================
+# Global Plugins
+#================================
+plugins:
+  - name: cors
+    tags: [ "global", "security" ]
+    config:
+      origins:
+        - "*"
+      methods:
+        - GET
+        - POST
+        - PUT
+        - DELETE
+        - PATCH
+        - OPTIONS
+      headers:
+        - Accept
+        - Authorization
+        - Content-Type
+        - X-Requested-With
+        - ngrok-skip-browser-warning
+      credentials: true
+      max_age: 3600
+
+  - name: rate-limiting
+    tags: [ "global", "protection" ]
+    config:
+      minute: 100
+      hour: 1000
+      policy: local

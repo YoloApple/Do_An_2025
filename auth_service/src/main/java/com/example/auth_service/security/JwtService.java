@@ -13,14 +13,22 @@ import java.util.Date;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
+
 @Service
 @RequiredArgsConstructor
 public class JwtService {
-    @Value("${jwt.secret}") private String secret;
-    @Value("${jwt.issuer}") private String issuer;
-    @Value("${jwt.access-exp-minutes}") private long accessExpMinutes;
+    @Value("${jwt.secret}") 
+    private String secret;
+    
+    @Value("${jwt.issuer}") 
+    private String issuer;
+    
+    @Value("${jwt.access-exp-minutes}") 
+    private long accessExpMinutes;
 
-    private Key key() { return Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8)); }
+    private Key key() { 
+        return Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8)); 
+    }
 
     public String generateAccessToken(User user) {
         Instant now = Instant.now();
@@ -38,7 +46,9 @@ public class JwtService {
         try {
             Jwts.parserBuilder().setSigningKey(key()).build().parseClaimsJws(token);
             return true;
-        } catch (JwtException e) { return false; }
+        } catch (JwtException e) { 
+            return false; 
+        }
     }
 
     public String extractUsername(String token) {
