@@ -44,12 +44,13 @@ services:
   # Course Service
   #----------------------------
   - name: course-service
-    url: https://arrased-contrate-shonta.ngrok-free.dev
+    url: https://be-doan2025.onrender.com
     tags: [ "courses" ]
     routes:
       - name: course-routes
         paths:
           - /api/courses
+          - /api/coureses/
         strip_path: false
         methods:
           - GET
@@ -64,12 +65,13 @@ services:
   # Lesson Service
   #----------------------------
   - name: lesson-service
-    url: https://arrased-contrate-shonta.ngrok-free.dev
+    url: https://be-doan2025.onrender.com
     tags: [ "lessons" ]
     routes:
       - name: lesson-routes
         paths:
           - /api/lessons
+          - /api/lessons/
         strip_path: false
         methods:
           - GET
