@@ -1,5 +1,8 @@
 _format_version: "3.0"
 
+#================================
+# SERVICES & ROUTES
+#================================
 services:
   #----------------------------
   # Auth Service on Railway
@@ -8,6 +11,7 @@ services:
     url: https://doan2025-production.up.railway.app
     tags: [ "auth" ]
     routes:
+      # PUBLIC routes (Không JWT)
       - name: auth-public-routes
         paths:
           - /api/v1/auth/login
@@ -16,8 +20,10 @@ services:
           - /api/v1/auth/forgot-password
           - /api/v1/auth/reset-password
           - /api/v1/auth/logout
-        strip_path: false 
+        strip_path: false
         tags: [ "auth", "public" ]
+
+      # PROTECTED route (Có JWT)
       - name: me-route
         paths:
           - /api/v1/me
@@ -25,7 +31,7 @@ services:
         tags: [ "auth", "protected" ]
 
   #----------------------------
-  # Course Service on Railway
+  # Course Service
   #----------------------------
   - name: course-service
     url: https://arrased-contrate-shonta.ngrok-free.dev
@@ -35,10 +41,11 @@ services:
         paths:
           - /api/courses
           - /api/course/
+        strip_path: false
         tags: [ "courses", "protected" ]
 
   #----------------------------
-  # Lesson Service on Railway
+  # Lesson Service
   #----------------------------
   - name: lesson-service
     url: https://arrased-contrate-shonta.ngrok-free.dev
@@ -48,10 +55,11 @@ services:
         paths:
           - /api/lessons
           - /api/lessons/
+        strip_path: false
         tags: [ "lessons", "protected" ]
 
   #----------------------------
-  # AI Service on Railway
+  # AI Service
   #----------------------------
   - name: ai-service
     url: https://nonsubmergible-raelene-preconcurrently.ngrok-free.dev
@@ -65,6 +73,7 @@ services:
           - /mindmap
           - /analyzer
           - /session
+        strip_path: false
         tags: [ "ai", "protected" ]
 
 #================================
@@ -73,7 +82,7 @@ services:
 consumers:
   - username: auth-service-consumer
     jwt_secrets:
-      - key: "${KONG_JWT_KEY}" 
+      - key: "${KONG_JWT_KEY}"
         secret: "${KONG_JWT_SECRET}"
         algorithm: HS256
 
@@ -81,22 +90,59 @@ consumers:
 # PLUGINS
 #================================
 plugins:
-  # Plugin JWT áp dụng cho các route được tag là "protected"
+  #--------------------------------------
+  # JWT CHO ROUTE /api/v1/me (auth-service)
+  #--------------------------------------
   - name: jwt
-    tags: [ "jwt-plugin" ]
+    route: me-route
+    tags: [ "jwt-plugin", "auth", "protected" ]
     config:
       key_claim_name: "iss"
       claims_to_verify: [ "exp" ]
       run_on_preflight: false
-    apply_to_routes_with_tag: protected
 
-  # Plugin CORS áp dụng cho TOÀN BỘ các service
+  #--------------------------------------
+  # JWT CHO TOÀN BỘ course-service
+  #--------------------------------------
+  - name: jwt
+    service: course-service
+    tags: [ "jwt-plugin", "courses", "protected" ]
+    config:
+      key_claim_name: "iss"
+      claims_to_verify: [ "exp" ]
+      run_on_preflight: false
+
+  #--------------------------------------
+  # JWT CHO TOÀN BỘ lesson-service
+  #--------------------------------------
+  - name: jwt
+    service: lesson-service
+    tags: [ "jwt-plugin", "lessons", "protected" ]
+    config:
+      key_claim_name: "iss"
+      claims_to_verify: [ "exp" ]
+      run_on_preflight: false
+
+  #--------------------------------------
+  # JWT CHO TOÀN BỘ ai-service
+  #--------------------------------------
+  - name: jwt
+    service: ai-service
+    tags: [ "jwt-plugin", "ai", "protected" ]
+    config:
+      key_claim_name: "iss"
+      claims_to_verify: [ "exp" ]
+      run_on_preflight: false
+
+  #--------------------------------------
+  # CORS CHO TOÀN BỘ DỰ ÁN
+  #--------------------------------------
   - name: cors
     tags: [ "cors-plugin" ]
     config:
       origins:
         - "https://ai-agent-virtual-classroom-fe.vercel.app"
-        - "http://localhost:3000" # Cho phép dev local
+        - "http://localhost:3000"
       methods: [ "GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS" ]
       headers: [ "Authorization", "Content-Type" ]
       credentials: true
