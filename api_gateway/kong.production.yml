@@ -40,7 +40,6 @@ services:
       - name: course-routes
         paths:
           - /api/courses
-          - /api/course/
         strip_path: false
         tags: [ "courses", "protected" ]
 
@@ -54,7 +53,6 @@ services:
       - name: lesson-routes
         paths:
           - /api/lessons
-          - /api/lessons/
         strip_path: false
         tags: [ "lessons", "protected" ]
 
@@ -67,7 +65,6 @@ services:
     routes:
       - name: ai-routes
         paths:
-          - /api/v1/ai/
           - /api/v1/ai
           - /chat
           - /mindmap
@@ -82,8 +79,8 @@ services:
 consumers:
   - username: auth-service-consumer
     jwt_secrets:
-      - key: "${KONG_JWT_KEY}"
-        secret: "${KONG_JWT_SECRET}"
+      - key: "auth-service"
+        secret: "your-super-secret-jwt-key-min-32-characters-long-for-hs256"
         algorithm: HS256
 
 #================================
@@ -91,7 +88,7 @@ consumers:
 #================================
 plugins:
   #--------------------------------------
-  # JWT CHO ROUTE /api/v1/me (auth-service)
+  # JWT CHO ROUTE /api/v1/me
   #--------------------------------------
   - name: jwt
     route: me-route
@@ -102,7 +99,7 @@ plugins:
       run_on_preflight: false
 
   #--------------------------------------
-  # JWT CHO TOÀN BỘ course-service
+  # JWT CHO course-service
   #--------------------------------------
   - name: jwt
     service: course-service
@@ -113,7 +110,7 @@ plugins:
       run_on_preflight: false
 
   #--------------------------------------
-  # JWT CHO TOÀN BỘ lesson-service
+  # JWT CHO lesson-service
   #--------------------------------------
   - name: jwt
     service: lesson-service
@@ -124,7 +121,7 @@ plugins:
       run_on_preflight: false
 
   #--------------------------------------
-  # JWT CHO TOÀN BỘ ai-service
+  # JWT CHO ai-service
   #--------------------------------------
   - name: jwt
     service: ai-service
