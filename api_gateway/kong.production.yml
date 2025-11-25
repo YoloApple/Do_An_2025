@@ -1,0 +1,104 @@
+_format_version: "3.0"
+
+services:
+  #----------------------------
+  # Auth Service on Railway
+  #----------------------------
+  - name: auth-service
+    url: https://doan2025-production.up.railway.app
+    tags: [ "auth" ]
+    routes:
+      - name: auth-public-routes
+        paths:
+          - /api/v1/auth/login
+          - /api/v1/auth/signup
+          - /api/v1/auth/refresh
+          - /api/v1/auth/forgot-password
+          - /api/v1/auth/reset-password
+          - /api/v1/auth/logout
+        strip_path: false 
+        tags: [ "auth", "public" ]
+      - name: me-route
+        paths:
+          - /api/v1/me
+        strip_path: false
+        tags: [ "auth", "protected" ]
+
+  #----------------------------
+  # Course Service on Railway
+  #----------------------------
+  - name: course-service
+    url: https://arrased-contrate-shonta.ngrok-free.dev
+    tags: [ "courses" ]
+    routes:
+      - name: course-routes
+        paths:
+          - /api/courses
+          - /api/course/
+        tags: [ "courses", "protected" ]
+
+  #----------------------------
+  # Lesson Service on Railway
+  #----------------------------
+  - name: lesson-service
+    url: https://arrased-contrate-shonta.ngrok-free.dev
+    tags: [ "lessons" ]
+    routes:
+      - name: lesson-routes
+        paths:
+          - /api/lessons
+          - /api/lessons/
+        tags: [ "lessons", "protected" ]
+
+  #----------------------------
+  # AI Service on Railway
+  #----------------------------
+  - name: ai-service
+    url: https://nonsubmergible-raelene-preconcurrently.ngrok-free.dev
+    tags: [ "ai" ]
+    routes:
+      - name: ai-routes
+        paths:
+          - /api/v1/ai/
+          - /api/v1/ai
+          - /chat
+          - /mindmap
+          - /analyzer
+          - /session
+        tags: [ "ai", "protected" ]
+
+#================================
+# JWT CONSUMERS & SECRETS
+#================================
+consumers:
+  - username: auth-service-consumer
+    jwt_secrets:
+      - key: "${KONG_JWT_KEY}" 
+        secret: "${KONG_JWT_SECRET}"
+        algorithm: HS256
+
+#================================
+# PLUGINS
+#================================
+plugins:
+  # Plugin JWT áp dụng cho các route được tag là "protected"
+  - name: jwt
+    tags: [ "jwt-plugin" ]
+    config:
+      key_claim_name: "iss"
+      claims_to_verify: [ "exp" ]
+      run_on_preflight: false
+    apply_to_routes_with_tag: protected
+
+  # Plugin CORS áp dụng cho TOÀN BỘ các service
+  - name: cors
+    tags: [ "cors-plugin" ]
+    config:
+      origins:
+        - "https://ai-agent-virtual-classroom-fe.vercel.app"
+        - "http://localhost:3000" # Cho phép dev local
+      methods: [ "GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS" ]
+      headers: [ "Authorization", "Content-Type" ]
+      credentials: true
+      max_age: 3600
+      preflight_continue: false
