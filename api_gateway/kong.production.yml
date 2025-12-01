@@ -86,7 +86,7 @@ services:
   # AI Service
   #----------------------------
   - name: ai-service
-    url: https://nonsubmergible-raelene-preconcurrently.ngrok-free.dev
+    url: https://virtual-classroom-ai-agent.onrender.com
     tags: [ "ai" ]
     routes:
       - name: ai-routes
