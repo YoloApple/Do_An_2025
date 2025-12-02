@@ -50,7 +50,7 @@ services:
       - name: course-routes
         paths:
           - /api/courses
-          - /api/coureses/
+          - /api/courses/
         strip_path: false
         methods:
           - GET
@@ -92,10 +92,12 @@ services:
       - name: ai-routes
         paths:
           - /api/v1/ai
-          - /chat
-          - /mindmap
-          - /analyzer
-          - /session
+          - /api/agent/chat
+          - /api/lessons/mindmap
+          - /api/agent/analyzer
+          - /api/session
+          - /api/user/level
+          - /api/health
         strip_path: false
         methods:
           - GET
