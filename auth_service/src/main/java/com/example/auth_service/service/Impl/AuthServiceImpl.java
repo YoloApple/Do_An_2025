@@ -13,6 +13,7 @@ import com.example.auth_service.service.AuthService;
 import com.example.auth_service.util.HashUtil;
 import com.example.auth_service.service.EmailService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -24,6 +25,7 @@ import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j // Annotation để ghi log
 public class AuthServiceImpl implements AuthService {
     private final UserRepository userRepo;
     private final RefreshTokenRepository rtRepo;
@@ -44,17 +46,31 @@ public class AuthServiceImpl implements AuthService {
         u.setPassword(encoder.encode(req.password()));
         User savedUser = userRepo.save(u);
 
-        // Sau khi lưu user, tạo token và trả về kết quả đăng nhập
+        log.info("New user registered: {}", req.username()); // Log khi đăng ký thành công
         return generateTokensAndLoginResult(savedUser);
     }
 
     @Override
     @Transactional
     public LoginResult login(LoginRequest req) {
+        // 1. Kiểm tra Username
         User u = userRepo.findByUsername(req.username())
-                .orElseThrow(() -> new RuntimeException("Bad credentials"));
-        if (!encoder.matches(req.password(), u.getPassword())) throw new RuntimeException("Bad credentials");
+                .orElseThrow(() -> {
+                    // Log cho Server biết
+                    log.warn("Login failed: Username '{}' not found", req.username());
+                    // Trả lỗi cụ thể cho Frontend
+                    return new RuntimeException("Username not found");
+                });
 
+        // 2. Kiểm tra Password
+        if (!encoder.matches(req.password(), u.getPassword())) {
+            // Log cho Server biết
+            log.warn("Login failed: Incorrect password for username '{}'", req.username());
+            // Trả lỗi cụ thể cho Frontend
+            throw new RuntimeException("Incorrect password");
+        }
+
+        log.info(" User '{}' logged in successfully", req.username());
         return generateTokensAndLoginResult(u);
     }
 
