@@ -44,7 +44,7 @@ services:
   # Course Service
   #----------------------------
   - name: course-service
-    url: https://be-doan2025.onrender.com
+    url: https://bedoan2025-production.up.railway.app
     tags: [ "courses" ]
     routes:
       - name: course-routes
@@ -65,7 +65,7 @@ services:
   # Lesson Service
   #----------------------------
   - name: lesson-service
-    url: https://be-doan2025.onrender.com
+    url: https://bedoan2025-production.up.railway.app
     tags: [ "lessons" ]
     routes:
       - name: lesson-routes
