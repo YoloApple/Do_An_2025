@@ -86,7 +86,7 @@ services:
   # AI Service
   #----------------------------
   - name: ai-service
-    url: https://virtual-classroom-ai-agent.onrender.com
+    url: https://virtual-classroom-ai-agent-production.up.railway.app
     tags: [ "ai" ]
     routes:
       - name: ai-routes
