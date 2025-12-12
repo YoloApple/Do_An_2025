@@ -93,7 +93,7 @@ services:
         paths:
           - /api/v1/ai
           - /api/agent/chat
-          - /api/lessons/mindmap
+          - /api/agent/mindmap
           - /api/agent/analyzer
           - /api/session
           - /api/user/level
