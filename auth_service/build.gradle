@@ -30,10 +30,6 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-thymeleaf'
     implementation 'org.springframework.boot:spring-boot-starter-oauth2-resource-server'
     implementation 'org.springframework.boot:spring-boot-starter-web'
-    
-    // ✅ FIXED: Xóa bỏ các thư viện Spring Cloud không cần thiết
-    // implementation 'org.springframework.cloud:spring-cloud-config-server'
-    // implementation 'org.springframework.cloud:spring-cloud-starter-gateway-mvc'
 
     compileOnly 'org.projectlombok:lombok'
     developmentOnly 'org.springframework.boot:spring-boot-devtools'
@@ -47,9 +43,9 @@ dependencies {
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
     testImplementation 'org.springframework.security:spring-security-test'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
-    
-    // ✅ FIXED: Hạ version cho tương thích với Spring Boot 3.3.0
-    implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.5.0' 
+
+    implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.5.0'
+    implementation 'me.paulschwarz:spring-dotenv:4.0.0'
 }
 
 tasks.named('test') {

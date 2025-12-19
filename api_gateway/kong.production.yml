@@ -44,7 +44,7 @@ services:
   # Course Service
   #----------------------------
   - name: course-service
-    url: https://be-doan2025.onrender.com
+    url: https://bedoan2025-production.up.railway.app
     tags: [ "courses" ]
     routes:
       - name: course-routes
@@ -65,7 +65,7 @@ services:
   # Lesson Service
   #----------------------------
   - name: lesson-service
-    url: https://be-doan2025.onrender.com
+    url: https://bedoan2025-production.up.railway.app
     tags: [ "lessons" ]
     routes:
       - name: lesson-routes
@@ -86,14 +86,14 @@ services:
   # AI Service
   #----------------------------
   - name: ai-service
-    url: https://virtual-classroom-ai-agent.onrender.com
+    url: https://virtual-classroom-ai-agent-production.up.railway.app
     tags: [ "ai" ]
     routes:
       - name: ai-routes
         paths:
           - /api/v1/ai
           - /api/agent/chat
-          - /api/lessons/mindmap
+          - /api/agent/mindmap
           - /api/agent/analyzer
           - /api/session
           - /api/user/level
