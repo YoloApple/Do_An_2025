@@ -41,7 +41,9 @@ $publicPaths = @(
     "/api/v1/auth/refresh",
     "/api/v1/auth/forgot-password",
     "/api/v1/auth/reset-password",
-    "/api/v1/auth/logout"
+    "/api/v1/auth/logout",
+    "/oauth2/authorization/google",
+    "/login/oauth2/code/google"
 )
 
 $publicRoute = @{

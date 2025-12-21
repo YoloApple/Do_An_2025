@@ -1,5 +1,6 @@
 package com.example.auth_service.config;
 
+import com.example.auth_service.security.OAuth2LoginSuccessHandler;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
@@ -26,6 +27,8 @@ public class SecurityConfig {
     @Value("${jwt.secret}")
     private String jwtSecret;
 
+    private final OAuth2LoginSuccessHandler oAuth2LoginSuccessHandler; // Inject Handler
+
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
@@ -35,6 +38,8 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/v1/auth/login", "/api/v1/auth/signup", "/api/v1/auth/refresh").permitAll()
                         .requestMatchers("/api/v1/auth/**").permitAll()
+                        // Cho phép endpoint login oauth2 mặc định của Spring
+                        .requestMatchers("/oauth2/**", "/login/oauth2/**").permitAll()
                         .requestMatchers("/swagger-ui.html",
                                 "/swagger-ui/**",
                                 "/v3/api-docs/**",
@@ -42,7 +47,12 @@ public class SecurityConfig {
                         .requestMatchers("/actuator/health", "/actuator/info").permitAll()
                         .anyRequest().authenticated()
                 )
-                .oauth2ResourceServer(oauth2 -> oauth2.jwt(withDefaults()));
+                .oauth2ResourceServer(oauth2 -> oauth2.jwt(withDefaults()))
+                // Thêm cấu hình OAuth2 Login
+                .oauth2Login(oauth2 -> oauth2
+                        .successHandler(oAuth2LoginSuccessHandler)
+                        .failureUrl("/login?error") // URL nếu login thất bại (tùy chọn)
+                );
 
         return http.build();
     }
