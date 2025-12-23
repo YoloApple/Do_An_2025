@@ -43,6 +43,7 @@ $publicPaths = @(
     "/api/v1/auth/reset-password",
     "/api/v1/auth/logout",
     "/oauth2/authorization/google",
+    "/api/v1/auth/oauth2/exchange",
     "/login/oauth2/code/google"
 )
 
