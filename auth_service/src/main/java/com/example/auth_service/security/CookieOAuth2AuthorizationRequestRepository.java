@@ -4,6 +4,7 @@ import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.ResponseCookie;
 import org.springframework.security.oauth2.client.web.AuthorizationRequestRepository;
 import org.springframework.security.oauth2.core.endpoint.OAuth2AuthorizationRequest;
 import org.springframework.stereotype.Component;
@@ -23,7 +24,6 @@ public class CookieOAuth2AuthorizationRequestRepository implements Authorization
         log.info("🔍 Loading authorization request from cookie...");
         log.info("   Request URI: {}", request.getRequestURI());
         
-        // Log all cookies
         Cookie[] cookies = request.getCookies();
         if (cookies != null) {
             log.info("   Available cookies:");
@@ -40,6 +40,7 @@ public class CookieOAuth2AuthorizationRequestRepository implements Authorization
         
         if (authRequest != null) {
             log.info("   ✅ Found authorization request in cookie");
+            log.info("   State from cookie: {}", authRequest.getState());
         } else {
             log.warn("   ❌ No authorization request found in cookie");
         }
@@ -64,17 +65,18 @@ public class CookieOAuth2AuthorizationRequestRepository implements Authorization
         String value = serialize(authorizationRequest);
         log.info("   Cookie size: {} bytes", value.length());
         
-        // ✅ Sử dụng Set-Cookie header thay vì response.addCookie()
-        // để có control tốt hơn với SameSite và Secure flags
-        String cookieHeader = String.format(
-            "%s=%s; Path=/; HttpOnly; Max-Age=%d; SameSite=Lax",
-            OAUTH2_AUTHORIZATION_REQUEST_COOKIE_NAME,
-            value,
-            COOKIE_EXPIRE_SECONDS
-        );
+        // ✅ FIX: Sử dụng ResponseCookie để set SameSite=None
+        ResponseCookie cookie = ResponseCookie
+            .from(OAUTH2_AUTHORIZATION_REQUEST_COOKIE_NAME, value)
+            .path("/")
+            .httpOnly(true)
+            .secure(false)  // false cho localhost, true cho production HTTPS
+            .sameSite("None")  // 🔥 QUAN TRỌNG: cho phép cross-site
+            .maxAge(COOKIE_EXPIRE_SECONDS)
+            .build();
         
-        response.addHeader("Set-Cookie", cookieHeader);
-        log.info("   ✅ Cookie saved with header: Set-Cookie");
+        response.addHeader("Set-Cookie", cookie.toString());
+        log.info("   ✅ Cookie saved with SameSite=None");
     }
 
     @Override
@@ -102,11 +104,16 @@ public class CookieOAuth2AuthorizationRequestRepository implements Authorization
     }
 
     private void deleteCookie(HttpServletRequest request, HttpServletResponse response, String name) {
-        String cookieHeader = String.format(
-            "%s=; Path=/; HttpOnly; Max-Age=0; SameSite=Lax",
-            name
-        );
-        response.addHeader("Set-Cookie", cookieHeader);
+        ResponseCookie cookie = ResponseCookie
+            .from(name, "")
+            .path("/")
+            .httpOnly(true)
+            .secure(false)
+            .sameSite("None")
+            .maxAge(0)
+            .build();
+        
+        response.addHeader("Set-Cookie", cookie.toString());
     }
 
     private String serialize(OAuth2AuthorizationRequest authorizationRequest) {

@@ -29,7 +29,7 @@ public class SecurityConfig {
     private String jwtSecret;
 
     private final OAuth2LoginSuccessHandler oAuth2LoginSuccessHandler;
-    private final CookieOAuth2AuthorizationRequestRepository cookieAuthorizationRequestRepository;
+    private final CookieOAuth2AuthorizationRequestRepository cookieAuthorizationRequestRepository; // ✅ Inject
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
@@ -50,7 +50,7 @@ public class SecurityConfig {
                 )
                 .oauth2ResourceServer(oauth2 -> oauth2.jwt(withDefaults()))
                 .oauth2Login(oauth2 -> oauth2
-                        //  SỬ DỤNG COOKIE REPOSITORY
+                        // SỬ DỤNG COOKIE REPOSITORY
                         .authorizationEndpoint(authorization -> authorization
                                 .authorizationRequestRepository(cookieAuthorizationRequestRepository)
                         )
