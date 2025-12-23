@@ -70,7 +70,7 @@ public class CookieOAuth2AuthorizationRequestRepository implements Authorization
             .from(OAUTH2_AUTHORIZATION_REQUEST_COOKIE_NAME, value)
             .path("/")
             .httpOnly(true)
-            .secure(false)  // false cho localhost, true cho production HTTPS
+            .secure(true)  // false cho localhost, true cho production HTTPS
             .sameSite("None")  // 🔥 QUAN TRỌNG: cho phép cross-site
             .maxAge(COOKIE_EXPIRE_SECONDS)
             .build();
