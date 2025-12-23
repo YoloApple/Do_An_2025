@@ -65,13 +65,13 @@ public class CookieOAuth2AuthorizationRequestRepository implements Authorization
         String value = serialize(authorizationRequest);
         log.info("   Cookie size: {} bytes", value.length());
         
-        // ✅ FIX: Sử dụng ResponseCookie để set SameSite=None
+        // ✅ FIX: Sử dụng ResponseCookie
         ResponseCookie cookie = ResponseCookie
             .from(OAUTH2_AUTHORIZATION_REQUEST_COOKIE_NAME, value)
             .path("/")
             .httpOnly(true)
-            .secure(true)  // false cho localhost, true cho production HTTPS
-            .sameSite("None")  // 🔥 QUAN TRỌNG: cho phép cross-site
+            .secure(true)  
+            .sameSite("None") 
             .maxAge(COOKIE_EXPIRE_SECONDS)
             .build();
         
