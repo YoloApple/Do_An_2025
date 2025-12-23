@@ -71,5 +71,25 @@ public class AuthController {
         authService.logout(req.token());
         return ResponseEntity.noContent().build();
     }
+
+    @PostMapping("/oauth2/exchange")
+    public ResponseEntity<ApiResponse<LoginResponse>> exchangeOAuth2Code(@RequestParam String code) {
+        // 1. Lấy token từ cache/session dựa vào code
+        LoginResult result = authService.getOAuth2TokenByCode(code);
+        
+        // 2. Xóa code để tránh reuse
+        authService.deleteOAuth2Code(code);
+        
+        User user = result.user();
+        TokenPair pair = result.tokenPair();
+        LoginResponse response = new LoginResponse(
+                user.getId(),
+                user.getUsername(),
+                user.getEmail(),
+                pair.accessToken(),
+                pair.refreshToken()
+        );
+        return ResponseEntity.ok(ApiResponse.success(response, "OAuth2 login successful"));
+    }
 }
 

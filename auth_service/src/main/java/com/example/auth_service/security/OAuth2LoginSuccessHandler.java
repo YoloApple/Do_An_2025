@@ -1,5 +1,7 @@
 package com.example.auth_service.security;
 
+import com.example.auth_service.dto.LoginResult;
+import com.example.auth_service.dto.TokenPair;
 import com.example.auth_service.entity.RefreshToken;
 import com.example.auth_service.entity.User;
 import com.example.auth_service.repository.RefreshTokenRepository;
@@ -21,11 +23,14 @@ import java.io.IOException;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 
 @Component
 @RequiredArgsConstructor
 @Slf4j
 public class OAuth2LoginSuccessHandler extends SimpleUrlAuthenticationSuccessHandler {
+    // Lưu tạm token vào memory (Production nên dùng Redis)
+    private static final ConcurrentHashMap<String, LoginResult> tokenCache = new ConcurrentHashMap<>();
 
     private final UserRepository userRepository;
     private final JwtService jwtService;
@@ -41,14 +46,12 @@ public class OAuth2LoginSuccessHandler extends SimpleUrlAuthenticationSuccessHan
     public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response, Authentication authentication) throws IOException, ServletException {
         OAuth2User oAuth2User = (OAuth2User) authentication.getPrincipal();
         String email = oAuth2User.getAttribute("email");
-        String name = oAuth2User.getAttribute("name");
 
-        // 1. Tìm hoặc tạo User mới
+        // 1. Tìm hoặc tạo User
         User user = userRepository.findByEmail(email)
                 .orElseGet(() -> {
                     User newUser = new User();
                     newUser.setEmail(email);
-                    // Tạo username từ email (bỏ phần @domain) + random string để tránh trùng
                     String baseUsername = email.split("@")[0];
                     String username = baseUsername;
                     if (userRepository.existsByUsername(username)) {
@@ -56,12 +59,11 @@ public class OAuth2LoginSuccessHandler extends SimpleUrlAuthenticationSuccessHan
                     }
                     newUser.setUsername(username);
                     newUser.setEnabled(true);
-                    // Password để null hoặc random vì login bằng Google
-                    newUser.setPassword(null); 
+                    newUser.setPassword(null);
                     return userRepository.save(newUser);
                 });
 
-        // 2. Tạo Token Pair (Access + Refresh) giống như AuthServiceImpl
+        // 2. Tạo Token Pair
         String accessToken = jwtService.generateAccessToken(user);
         String refreshPlain = UUID.randomUUID().toString();
         String refreshHash = HashUtil.sha256(refreshPlain);
@@ -72,13 +74,34 @@ public class OAuth2LoginSuccessHandler extends SimpleUrlAuthenticationSuccessHan
         rt.setExpiresAt(Instant.now().plus(refreshExpDays, ChronoUnit.DAYS));
         refreshTokenRepository.save(rt);
 
-        // 3. Redirect về Frontend kèm theo token
-        // Frontend sẽ lấy token từ URL này để lưu vào localStorage
+        // 3. Tạo code ngắn hạn và lưu vào cache
+        String code = UUID.randomUUID().toString();
+        LoginResult result = new LoginResult(user, new TokenPair(accessToken, refreshPlain));
+        tokenCache.put(code, result);
+        
+        // Xóa code sau 60s
+        new Thread(() -> {
+            try {
+                Thread.sleep(60000);
+                tokenCache.remove(code);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
+        }).start();
+
+        // 4. Redirect về FE với code (không phải token)
         String targetUrl = UriComponentsBuilder.fromUriString(frontendUrl + "/oauth2/redirect")
-                .queryParam("accessToken", accessToken)
-                .queryParam("refreshToken", refreshPlain)
+                .queryParam("code", code)
                 .build().toUriString();
 
         getRedirectStrategy().sendRedirect(request, response, targetUrl);
+    }
+
+    public static LoginResult getByCode(String code) {
+        return tokenCache.get(code);
+    }
+
+    public static void removeCode(String code) {
+        tokenCache.remove(code);
     }
 }
