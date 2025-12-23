@@ -12,4 +12,7 @@ public interface AuthService {
     void logout(String refreshPlain);
     void forgotPassword(String email);
     void resetPassword(String token, String newPassword);
+    //oath2
+    LoginResult getOAuth2TokenByCode(String code);
+    void deleteOAuth2Code(String code);
 }

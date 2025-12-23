@@ -1,5 +1,7 @@
 package com.example.auth_service.config;
 
+import com.example.auth_service.security.CookieOAuth2AuthorizationRequestRepository;
+import com.example.auth_service.security.OAuth2LoginSuccessHandler;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
@@ -26,6 +28,9 @@ public class SecurityConfig {
     @Value("${jwt.secret}")
     private String jwtSecret;
 
+    private final OAuth2LoginSuccessHandler oAuth2LoginSuccessHandler;
+    private final CookieOAuth2AuthorizationRequestRepository cookieAuthorizationRequestRepository; // ✅ Inject
+
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
@@ -35,6 +40,7 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/v1/auth/login", "/api/v1/auth/signup", "/api/v1/auth/refresh").permitAll()
                         .requestMatchers("/api/v1/auth/**").permitAll()
+                        .requestMatchers("/oauth2/**", "/login/oauth2/**").permitAll()
                         .requestMatchers("/swagger-ui.html",
                                 "/swagger-ui/**",
                                 "/v3/api-docs/**",
@@ -42,7 +48,15 @@ public class SecurityConfig {
                         .requestMatchers("/actuator/health", "/actuator/info").permitAll()
                         .anyRequest().authenticated()
                 )
-                .oauth2ResourceServer(oauth2 -> oauth2.jwt(withDefaults()));
+                .oauth2ResourceServer(oauth2 -> oauth2.jwt(withDefaults()))
+                .oauth2Login(oauth2 -> oauth2
+                        // SỬ DỤNG COOKIE REPOSITORY
+                        .authorizationEndpoint(authorization -> authorization
+                                .authorizationRequestRepository(cookieAuthorizationRequestRepository)
+                        )
+                        .successHandler(oAuth2LoginSuccessHandler)
+                        .failureUrl("/login?error")
+                );
 
         return http.build();
     }

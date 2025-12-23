@@ -37,6 +37,9 @@ curl -i -X POST $KONG_ADMIN_URL/services/auth-service/routes \
   --data "paths[]=/api/v1/auth/forgot-password" \
   --data "paths[]=/api/v1/auth/reset-password" \
   --data "paths[]=/api/v1/auth/logout" \
+  --data "paths[]=/api/v1/auth/oauth2/exchange" \
+  --data "paths[]=/oauth2/authorization/google" \
+  --data "paths[]=/login/oauth2/code/google" \
   --data "strip_path=false"
 
 sleep 2

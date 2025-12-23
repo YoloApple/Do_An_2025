@@ -9,6 +9,7 @@ import com.example.auth_service.entity.User;
 import com.example.auth_service.repository.RefreshTokenRepository;
 import com.example.auth_service.repository.UserRepository;
 import com.example.auth_service.security.JwtService;
+import com.example.auth_service.security.OAuth2LoginSuccessHandler;
 import com.example.auth_service.service.AuthService;
 import com.example.auth_service.util.HashUtil;
 import com.example.auth_service.service.EmailService;
@@ -25,7 +26,7 @@ import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
-@Slf4j // Annotation để ghi log
+@Slf4j
 public class AuthServiceImpl implements AuthService {
     private final UserRepository userRepo;
     private final RefreshTokenRepository rtRepo;
@@ -156,6 +157,23 @@ public class AuthServiceImpl implements AuthService {
         rtRepo.revokeAllByUser(user.getId());
 
         userRepo.save(user);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public LoginResult getOAuth2TokenByCode(String code) {
+        LoginResult result = OAuth2LoginSuccessHandler.getByCode(code);
+        if (result == null) {
+            log.warn("Invalid or expired OAuth2 code: {}", code);
+            throw new RuntimeException("Invalid or expired code");
+        }
+        return result;
+    }
+
+    @Override
+    @Transactional
+    public void deleteOAuth2Code(String code) {
+        OAuth2LoginSuccessHandler.removeCode(code);
     }
 }
 
