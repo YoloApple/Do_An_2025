@@ -5,7 +5,7 @@ import com.example.auth_service.dto.ProfileUpdateReq;
 import com.example.auth_service.entity.Gender;
 import com.example.auth_service.entity.User;
 import com.example.auth_service.repository.UserRepository;
-import com.example.auth_service.service.MeService;
+import com.example.auth_service.service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -13,7 +13,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
-public class MeServiceImpl implements MeService {
+public class UserServiceImpl implements UserService {
     private final UserRepository userRepo;
     private final PasswordEncoder encoder;
 
